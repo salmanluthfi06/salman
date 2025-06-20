@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simulasi Penjadwalan CPU</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    /* Reset dan base */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      margin: 0;
+      padding: 0;
+      color: #e0e6f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    h1 {
+      font-weight: 700;
+      font-size: 2.8rem;
+      margin-bottom: 5px;
+      color: #f0f6ff;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    }
+    h3 {
+      font-weight: 400;
+      font-size: 1.2rem;
+      margin-top: 0;
+      margin-bottom: 30px;
+      color: #a1b1cc;
+      letter-spacing: 0.04em;
+    }
+
+    /* Tabs container */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+      user-select: none;
+    }
+    .tab {
+      padding: 14px 32px;
+      cursor: pointer;
+      background: #2a3a62;
+      border-radius: 12px 12px 0 0;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #9fb3d6;
+      box-shadow: inset 0 -4px 0 0 transparent;
+      transition: 
+        background-color 0.3s ease,
+        color 0.3s ease,
+        box-shadow 0.3s ease;
+    }
+    .tab:hover {
+      background-color: #415a99;
+      color: #dbe4ff;
+    }
+    .tab.active {
+      background-color: #f0f6ff;
+      color: #1e3c72;
+      box-shadow: inset 0 -4px 0 0 #1e3c72;
+      cursor: default;
+    }
+
+    /* Panels */
+    .panel {
+      display: none;
+      background: #2a3a62;
+      border-radius: 0 0 16px 16px;
+      max-width: 720px;
+      width: 100%;
+      padding: 36px 40px;
+      box-shadow: 0 8px 30px rgba(12, 30, 82, 0.6);
+      animation: fadeInUp 0.5s ease forwards;
+      color: #dbe4ff;
+    }
+    .panel.active {
+      display: block;
+    }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Headings inside panels */
+    .panel h2 {
+      margin-top: 0;
+      margin-bottom: 25px;
+      font-weight: 700;
+      font-size: 1.8rem;
+      color: #f0f6ff;
+      text-shadow: 0 0 6px rgba(255, 255, 255, 0.25);
+    }
+
+    /* Labels and inputs */
+    label {
+      display: block;
+      margin-top: 18px;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #aeb8d3;
+      letter-spacing: 0.02em;
+    }
+    input[type='number'] {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: none;
+      background: #415a99;
+      color: #dbe4ff;
+      font-size: 1rem;
+      font-weight: 500;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+      transition: background-color 0.3s ease;
+      outline-offset: 2px;
+      outline-color: transparent;
+    }
+    input[type='number']::placeholder {
+      color: #a1b1cc;
+    }
+    input[type='number']:focus {
+      background: #577fc1;
+      outline-color: #f0f6ff;
+    }
+
+    /* Buttons */
+    button {
+      margin-top: 26px;
+      width: 100%;
+      padding: 14px 0;
+      border-radius: 14px;
+      border: none;
+      background: #f0f6ff;
+      color: #1e3c72;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(240, 246, 255, 0.7);
+      transition: background-color 0.3s ease, color 0.3s ease;
+      user-select: none;
+    }
+    button:hover {
+      background: #577fc1;
+      color: #f0f6ff;
+      box-shadow: 0 8px 30px rgba(87, 127, 193, 0.8);
+    }
+    button:active {
+      transform: scale(0.97);
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 32px;
+      background: #415a99;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    th,
+    td {
+      padding: 16px 12px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #f0f6ff;
+      border-bottom: 1px solid rgba(240, 246, 255, 0.15);
+    }
+    th {
+      background: #1e3c72;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Paragraph results */
+    p {
+      margin-top: 26px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: #dbe4ff;
+      text-align: right;
+      letter-spacing: 0.04em;
+      text-shadow: 0 0 6px rgba(0,0,0,0.3);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 30px 15px;
+      }
+      .tabs {
+        gap: 12px;
+      }
+      .tab {
+        padding: 10px 22px;
+        font-size: 0.9rem;
+      }
+      .panel {
+        padding: 28px 25px;
+      }
+      button {
+        font-size: 1rem;
+        padding: 12px 0;
+      }
+      input[type='number'] {
+        font-size: 0.95rem;
+      }
+      th, td {
+        font-size: 0.9rem;
+        padding: 12px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Muhammad Salman Luthfi Al Fariji</h1>
+  <h3>--> 11240040 TI A <--</h3>
+  <h1>Simulasi Penjadwalan CPU</h1>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('fifo')">FIFO</div>
+    <div class="tab" onclick="switchTab('rr')">Round Robin</div>
+    <div class="tab" onclick="switchTab('sjf')">SJF</div>
+    <div class="tab" onclick="switchTab('srjf')">SRJF</div>
+  </div>
+
+  <!-- FIFO -->
+  <div id="fifo" class="panel active">
+    <h2>FIFO (First Come First Serve)</h2>
+    <label>Jumlah Proses:</label>
+    <input type="number" id="jumlahFIFO" min="1" placeholder="Contoh: 4" />
+    <button onclick="buatInputFIFO()">Buat Input</button>
+    <form id="formFIFO"></form>
+    <div id="hasilFIFO"></div>
+  </div>
+
+  <!-- Round Robin -->
+  <div id="rr" class="panel">
+    <h2>Round Robin</h2>
+    <label>Jumlah Proses:</label>
+    <input type="number" id="jumlahRR" min="1" placeholder="Contoh: 4" />
+    <label>Quantum Time:</label>
+    <input type="number" id="quantumRR" min="1" placeholder="Contoh: 2" />
+    <button onclick="buatInputRR()">Buat Input</button>
+    <form id="formRR"></form>
+    <div id="hasilRR"></div>
+  </div>
+
+  <!-- SJF Non-Preemptive -->
+  <div id="sjf" class="panel">
+    <h2>SJF (Shortest Job First) Non-Preemptive</h2>
+    <label>Jumlah Proses:</label>
+    <input type="number" id="jumlahSJF" min="1" placeholder="Contoh: 4" />
+    <button onclick="buatInputSJF()">Buat Input</button>
+    <form id="formSJF"></form>
+    <div id="hasilSJF"></div>
+  </div>
+
+  <!-- SRJF (Preemptive SJF) -->
+  <div id="srjf" class="panel">
+    <h2>SRJF (Shortest Remaining Job First)</h2>
+    <label>Jumlah Proses:</label>
+    <input type="number" id="jumlahSRJF" min="1" placeholder="Contoh: 4" />
+    <button onclick="buatInputSRJF()">Buat Input</button>
+    <form id="formSRJF"></form>
+    <div id="hasilSRJF"></div>
+  </div>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach((p) => p.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      document.querySelector(`.tab[onclick*="${tabId}"]`).classList.add('active');
+    }
+
+    // FIFO
+    function buatInputFIFO() {
+      const n = +document.getElementById('jumlahFIFO').value;
+      const form = document.getElementById('formFIFO');
+      form.innerHTML = '';
+      for (let i = 0; i < n; i++) {
+        form.innerHTML += `<label>Burst Time P${i + 1}:</label>
+          <input type="number" id="bt${i}" required min="0" />`;
+      }
+      form.innerHTML += `<button onclick="hitungFIFO(${n});return false">Hitung FIFO</button>`;
+      document.getElementById('hasilFIFO').innerHTML = '';
+    }
+
+    function hitungFIFO(n) {
+      let bt = [], wt = [0], tat = [];
+      for (let i = 0; i < n; i++) bt[i] = +document.getElementById('bt' + i).value;
+      for (let i = 1; i < n; i++) wt[i] = wt[i - 1] + bt[i - 1];
+      for (let i = 0; i < n; i++) tat[i] = wt[i] + bt[i];
+      let totWT = 0, totTAT = 0;
+      let html = `<table><tr><th>Proses</th><th>Burst Time</th><th>Waiting Time</th><th>Turnaround Time</th></tr>`;
+      for (let i = 0; i < n; i++) {
+        totWT += wt[i];
+        totTAT += tat[i];
+        html += `<tr><td>P${i + 1}</td><td>${bt[i]}</td><td>${wt[i]}</td><td>${tat[i]}</td></tr>`;
+      }
+      html += `</table><p>Rata-rata WT: ${(totWT / n).toFixed(2)} | Rata-rata TAT: ${(totTAT / n).toFixed(2)}</p>`;
+      document.getElementById('hasilFIFO').innerHTML = html;
+    }
+
+    // Round Robin
+    function buatInputRR() {
+      const n = +document.getElementById('jumlahRR').value;
+      const form = document.getElementById('formRR');
+      form.innerHTML = '';
+      for (let i = 0; i < n; i++) {
+        form.innerHTML += `<label>Burst Time P${i + 1}:</label>
+          <input type="number" id="btRR${i}" required min="0" />`;
+      }
+      form.innerHTML += `<button onclick="hitungRR(${n});return false">Hitung Round Robin</button>`;
+      document.getElementById('hasilRR').innerHTML = '';
+    }
+
+    function hitungRR(n) {
+      const quantum = +document.getElementById('quantumRR').value;
+      let bt = [], rt = [], wt = Array(n).fill(0), tat = Array(n).fill(0);
+      for (let i = 0; i < n; i++) bt[i] = rt[i] = +document.getElementById('btRR' + i).value;
+
+      let t = 0, done = 0;
+      while (done < n) {
+        let doneInCycle = false;
+        for (let i = 0; i < n; i++) {
+          if (rt[i] > 0) {
+            doneInCycle = true;
+            if (rt[i] > quantum) {
+              t += quantum;
+              rt[i] -= quantum;
+            } else {
+              t += rt[i];
+              wt[i] = t - bt[i];
+              rt[i] = 0;
+              done++;
+            }
+          }
+        }
+        if (!doneInCycle) break;
+      }
+
+      for (let i = 0; i < n; i++) tat[i] = bt[i] + wt[i];
+      let totWT = 0, totTAT = 0;
+      let html = `<table><tr><th>Proses</th><th>Burst Time</th><th>Waiting Time</th><th>Turnaround Time</th></tr>`;
+      for (let i = 0; i < n; i++) {
+        totWT += wt[i];
+        totTAT += tat[i];
+        html += `<tr><td>P${i + 1}</td><td>${bt[i]}</td><td>${wt[i]}</td><td>${tat[i]}</td></tr>`;
+      }
+      html += `</table><p>Rata-rata WT: ${(totWT / n).toFixed(2)} | Rata-rata TAT: ${(totTAT / n).toFixed(2)}</p>`;
+      document.getElementById('hasilRR').innerHTML = html;
+    }
+
+    // SJF Non-preemptive
+    function buatInputSJF() {
+      const n = +document.getElementById('jumlahSJF').value;
+      const form = document.getElementById('formSJF');
+      form.innerHTML = '';
+      for (let i = 0; i < n; i++) {
+        form.innerHTML += `<label>Burst Time P${i + 1}:</label>
+          <input type="number" id="btSJF${i}" required min="0" />`;
+      }
+      form.innerHTML += `<button onclick="hitungSJF(${n});return false">Hitung SJF</button>`;
+      document.getElementById('hasilSJF').innerHTML = '';
+    }
+
+    function hitungSJF(n) {
+      let burst = [];
+      for (let i = 0; i < n; i++) burst.push({id: i, bt: +document.getElementById('btSJF' + i).value});
+      burst.sort((a,b) => a.bt - b.bt);
+
+      let wt = [], tat = [], time = 0;
+      for (let i = 0; i < n; i++) {
+        wt[burst[i].id] = time;
+        time += burst[i].bt;
+        tat[burst[i].id] = wt[burst[i].id] + burst[i].bt;
+      }
+
+      let totWT = 0, totTAT = 0;
+      let html = `<table><tr><th>Proses</th><th>Burst Time</th><th>Waiting Time</th><th>Turnaround Time</th></tr>`;
+      for (let i = 0; i < n; i++) {
+        totWT += wt[i];
+        totTAT += tat[i];
+        html += `<tr><td>P${i + 1}</td><td>${document.getElementById('btSJF'+i).value}</td><td>${wt[i]}</td><td>${tat[i]}</td></tr>`;
+      }
+      html += `</table><p>Rata-rata WT: ${(totWT / n).toFixed(2)} | Rata-rata TAT: ${(totTAT / n).toFixed(2)}</p>`;
+      document.getElementById('hasilSJF').innerHTML = html;
+    }
+
+    // SRJF (Preemptive SJF)
+    function buatInputSRJF() {
+      const n = +document.getElementById('jumlahSRJF').value;
+      const form = document.getElementById('formSRJF');
+      form.innerHTML = '';
+      for (let i = 0; i < n; i++) {
+        form.innerHTML += `<label>Burst Time P${i + 1}:</label>
+          <input type="number" id="btSRJF${i}" required min="0" />`;
+      }
+      form.innerHTML += `<button onclick="hitungSRJF(${n});return false">Hitung SRJF</button>`;
+      document.getElementById('hasilSRJF').innerHTML = '';
+    }
+
+    function hitungSRJF(n) {
+      let bt = [];
+      for (let i = 0; i < n; i++) bt[i] = +document.getElementById('btSRJF' + i).value;
+      let rt = bt.slice();
+      let wt = Array(n).fill(0), tat = Array(n).fill(0);
+
+      let complete = 0, t = 0, minm = Infinity, shortest = -1;
+      let check = false;
+      while (complete != n) {
+        minm = Infinity;
+        shortest = -1;
+        check = false;
+        for (let i = 0; i < n; i++) {
+          if (rt[i] > 0 && rt[i] < minm) {
+            minm = rt[i];
+            shortest = i;
+            check = true;
+          }
+        }
+        if (!check) {
+          t++;
+          continue;
+        }
+        rt[shortest]--;
+        t++;
+
+        if (rt[shortest] == 0) {
+          complete++;
+          let finishTime = t;
+          wt[shortest] = finishTime - bt[shortest];
+          if (wt[shortest] < 0) wt[shortest] = 0;
+          tat[shortest] = bt[shortest] + wt[shortest];
+        }
+      }
+      let totWT = wt.reduce((a,b) => a+b, 0);
+      let totTAT = tat.reduce((a,b) => a+b, 0);
+      let html = `<table><tr><th>Proses</th><th>Burst Time</th><th>Waiting Time</th><th>Turnaround Time</th></tr>`;
+      for (let i = 0; i < n; i++) {
+        html += `<tr><td>P${i + 1}</td><td>${bt[i]}</td><td>${wt[i]}</td><td>${tat[i]}</td></tr>`;
+      }
+      html += `</table><p>Rata-rata WT: ${(totWT / n).toFixed(2)} | Rata-rata TAT: ${(totTAT / n).toFixed(2)}</p>`;
+      document.getElementById('hasilSRJF').innerHTML = html;
+    }
+  </script>
+</body>
+</html>
